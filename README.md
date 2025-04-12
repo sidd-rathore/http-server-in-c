@@ -47,6 +47,6 @@ gcc main.c -o server
 ---
 
 ##🧵 Follow the Journey
-This project is part of a public learning journey I'm sharing on Twitter — follow along and see each step as it's built and improved!
-📲 Twitter: @SidharRathore
-#100DaysOfCode #CProgramming #Networking
+- This project is part of a public learning journey I'm sharing on Twitter — follow along and see each step as it's built and improved!
+- 📲 Twitter: @SidharRathore
+- #100DaysOfCode #CProgramming #Networking
