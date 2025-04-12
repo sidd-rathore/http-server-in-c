@@ -26,7 +26,8 @@ Built as part of a learning journey to understand how networking and HTTP work a
 ## 🛠️ Usage
 
 ### Compile
-```bash
+```
+bash
 gcc main.c -o server
 ./server
 ```
@@ -36,11 +37,13 @@ gcc main.c -o server
 ---
 
 ## 📂 Project Structure
+```
 .
 ├── main.c         # Server source code
 ├── README.md      # You're here!
 └── .gitignore     # Git ignore rules
 
+```
 ---
 
 ##🧵 Follow the Journey
