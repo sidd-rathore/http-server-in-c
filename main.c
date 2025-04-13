@@ -2,6 +2,10 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <unistd.h>
+#define DS_SB_IMPLEMENTATION
+#define DS_SS_IMPLEMENTATION
+#define DS_IO_IMPLEMENTATION
+#include "ds.h"
 
 #define BUFFER_SIZE 1024
 int main(){
@@ -49,35 +53,90 @@ int main(){
     printf("Server listening on port 8080...\n");
 
     // Accept incoming connections
-    addr_size = sizeof(clientAddr);
-    int clientSockfd = accept(sockfd,(struct sockaddr*)&clientAddr, &addr_size);
-    if (clientSockfd == INVALID_SOCKET) {
-        printf("Accept failed: %d\n", WSAGetLastError());
-        closesocket(sockfd);
-        WSACleanup();
-        return 1;
-    }
+    int clientSockfd;
+    while(1) {
+        addr_size = sizeof(clientAddr);
+        clientSockfd = accept(sockfd,(struct sockaddr*)&clientAddr, &addr_size);
+        if (clientSockfd == INVALID_SOCKET) {
+            printf("Accept failed: %d\n", WSAGetLastError());
+            closesocket(sockfd);
+            WSACleanup();
+            return 1;
+        }
 
-    printf("Client connected.\n");
+        printf("Client connected.\n");
 
-    // Send data to the client
-    const char *msg = "Hello, client!\n";
-    int bytesSent = send(clientSockfd, msg, strlen(msg), 0);
-    if (bytesSent == SOCKET_ERROR) {
-        printf("Send failed: %d\n", WSAGetLastError());
-        closesocket(clientSockfd);
-    }
-    
-    // Read data from the client
-    ssize_t bytesRead;
-    while ((bytesRead = recv(clientSockfd, buffer, sizeof(buffer), 0)) > 0) {
+        
+        
+        // Read data from the client
+        ssize_t bytesRead;
+        bytesRead = recv(clientSockfd, buffer, sizeof(buffer), 0);
         buffer[bytesRead] = '\0'; 
         printf("%s", buffer); 
-    }
-    if (bytesRead == 0) {
-        printf("Client disconnected.\n");
-    } else if (bytesRead == -1) {
-        printf("Read failed: %d\n", WSAGetLastError());
+        unsigned int buffer_len = bytesRead;
+        
+        
+        
+        if (bytesRead == 0) {
+            printf("\nClient disconnected.\n");
+            continue;
+            
+        } else if (bytesRead == -1) {
+            printf("\nRead failed: %d\n", WSAGetLastError());
+           
+        }
+        
+        
+        // GET /home HTTP/1.1
+        // Host: localhost:8080
+        // User-Agent: curl/8.9.1
+        // Accept: */*
+        //
+        ds_string_slice request, token;
+        ds_string_slice_init(&request, buffer, buffer_len);
+
+        // VERB
+        ds_string_slice_tokenize(&request, ' ', &token);
+        char *verb = NULL;
+        ds_string_slice_to_owned(&token, &verb);
+        if( strcmp(verb,"GET") != 0){
+            DS_LOG_ERROR("not a get request");
+            // TODO: send 400
+            char *not_allowed = "HTTP/1.1 405 Method Not Allowed\nContent-Type: text/plain\nCContent-Length: 23\n\n405 Method Not Allowed";
+            send(clientSockfd, not_allowed, strlen(not_allowed), 0);
+            closesocket(clientSockfd);
+            continue;
+        }
+
+        // PATH
+        ds_string_slice_tokenize(&request, ' ', &token);
+        char *path = NULL;
+        ds_string_slice_to_owned(&token, &path);
+
+        // TODO: if files do not exists return 404
+        char *content = NULL;
+        int content_len = ds_io_read_file(path + 1, &content);
+        if (content_len == -1 || content == NULL) {
+            char *not_found = "HTTP/1.1 404 Not Found\nContent-Type: text/plain\nContent-Length: 13\n\n404 Not Found";
+            send(clientSockfd, not_found, strlen(not_found), 0);
+            closesocket(clientSockfd);
+            continue;
+        }
+        
+
+        ds_string_builder response_builder;
+        ds_string_builder_init(&response_builder);
+        ds_string_builder_append(&response_builder,"HTTP/1.1 200 OK\n Content-Type: text/html\nContent-Length: %d\n\n%s",content_len ,content);
+        char *response = NULL;
+        ds_string_builder_build(&response_builder, &response);
+        int response_len = strlen(response);
+        // Send the response to the client
+        int bytesSent = send(clientSockfd, response, response_len, 0);
+        if (bytesSent == SOCKET_ERROR) {
+            printf("Send failed: %d\n", WSAGetLastError());
+            closesocket(clientSockfd);
+        }
+
     }
     // Clean up
     closesocket(clientSockfd);

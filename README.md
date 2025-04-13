@@ -26,17 +26,20 @@ Built as part of a learning journey to understand how networking and HTTP work a
 ## 🛠️ Usage
 
 ### Compile
+
 ```
 bash
 gcc main.c -o server
 ./server
 ```
+
 - Then open your browser and visit: http://localhost:8080
 - Or use curl, telnet or np to connect to the server
 
 ---
 
 ## 📂 Project Structure
+
 ```
 .
 ├── main.c         # Server source code
@@ -44,9 +47,11 @@ gcc main.c -o server
 └── .gitignore     # Git ignore rules
 
 ```
+
 ---
 
-##🧵 Follow the Journey
+## 🧵 Follow the Journey
+
 - This project is part of a public learning journey I'm sharing on Twitter — follow along and see each step as it's built and improved!
 - 📲 Twitter: @SidharRathore
 - #100DaysOfCode #CProgramming #Networking
