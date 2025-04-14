@@ -2,10 +2,13 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #define DS_SB_IMPLEMENTATION
 #define DS_SS_IMPLEMENTATION
 #define DS_IO_IMPLEMENTATION
 #include "ds.h"
+#include "dirent.h"
+#define _CRT_SECURE_NO_WARNINGS
 
 #define BUFFER_SIZE 1024
 int main(){
@@ -114,16 +117,53 @@ int main(){
         ds_string_slice_to_owned(&token, &path);
 
         // TODO: if files do not exists return 404
-        char *content = NULL;
-        int content_len = ds_io_read_file(path + 1, &content);
-        if (content_len == -1 || content == NULL) {
+        if (strcmp(path, "/") == 0) {
+            path = "/.";
+        }
+        struct stat path_stat;
+        if (stat(path + 1, &path_stat) != 0) {
             char *not_found = "HTTP/1.1 404 Not Found\nContent-Type: text/plain\nContent-Length: 13\n\n404 Not Found";
             send(clientSockfd, not_found, strlen(not_found), 0);
             closesocket(clientSockfd);
             continue;
         }
-        
 
+        char *content = NULL;
+        int content_len = 0;
+        if(S_ISREG(path_stat.st_mode)){
+            content_len = ds_io_read_file(path + 1, &content);
+        } else if(S_ISDIR(path_stat.st_mode)){
+            // List directories
+            ds_string_builder dir_builder;
+            ds_string_builder_init(&dir_builder);
+            ds_string_builder_append(&dir_builder, "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Directory Listing for %s</title>\n</head>\n<body>\n<h1>Directory Listing for %s</h1>\n<hr>\n<ul>\n",path,path);
+            //Search for files
+            DIR *directory = opendir(path+1);
+            struct dirent *dir;
+            while ((dir = readdir(directory)) != NULL) {
+                if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) {
+                    continue;
+                }
+        
+                char href[1024];
+                snprintf(href, sizeof(href), "%s%s%s", path, 
+                         path[strlen(path) - 1] == '/' ? "" : "/", 
+                         dir->d_name);
+                ds_string_builder_append(&dir_builder, "<li><a href=\"%s\">%s</a></li>\n", href, dir->d_name);
+            }
+            closedir(directory);
+            ds_string_builder_append(&dir_builder, "</ul>\n<hr>\n</body>\n</html>");
+            ds_string_builder_build(&dir_builder, &content);
+            content_len = strlen(content);
+        } else {
+            char *forbidden = "HTTP/1.1 403 Forbidden\nContent-Type: text/plain\nContent-Length: 18\n\n403 Forbidden Access";
+            send(clientSockfd, forbidden, strlen(forbidden), 0);
+            closesocket(clientSockfd);
+            continue;
+
+        }
+
+        
         ds_string_builder response_builder;
         ds_string_builder_init(&response_builder);
         ds_string_builder_append(&response_builder,"HTTP/1.1 200 OK\n Content-Type: text/html\nContent-Length: %d\n\n%s",content_len ,content);
@@ -136,6 +176,7 @@ int main(){
             printf("Send failed: %d\n", WSAGetLastError());
             closesocket(clientSockfd);
         }
+        
 
     }
     // Clean up

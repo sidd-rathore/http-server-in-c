@@ -8,45 +8,47 @@ Built as part of a learning journey to understand how networking and HTTP work a
 
 ## 🚀 Features
 
-- ✅ Manual socket creation with `AF_INET` and `SOCK_STREAM`
-- ✅ Port binding, listening, and accepting client connections
-- ✅ Basic HTTP response handling
-- ✅ Server reads from and writes to clients
+- ✅ Manual socket creation using `AF_INET` and `SOCK_STREAM`
+- ✅ Port binding, listening, and accepting multiple client connections
+- ✅ Basic HTTP request parsing and response handling
+- ✅ Serves static files from the server directory
+- ✅ **Directory listing for folders** with clickable HTML links
+- ✅ Custom 404 Not Found handling for invalid paths
 
 ---
 
 ## 📚 Learning Objectives
 
-- Understand how `socket()`, `bind()`, `listen()`, and `accept()` work in C
-- Handle simple HTTP requests manually
-- Build a foundation for deeper networking projects (e.g., chat server, REST APIs)
+- Understand core socket functions: `socket()`, `bind()`, `listen()`, `accept()`
+- Learn how HTTP requests are structured and parsed manually
+- Practice sending valid HTTP responses with headers and body
+- Build a stepping stone for future projects like chat apps, REST APIs, or full web servers
 
 ---
 
 ## 🛠️ Usage
 
-### Compile
+### 🧱 Compile & Run
 
-```
-bash
-gcc main.c -o server
-./server
-```
+To compile and run the server:
 
-- Then open your browser and visit: http://localhost:8080
-- Or use curl, telnet or np to connect to the server
+- Run: `gcc main.c -o server`
+- Then: `./server`
 
----
+### 🌐 Access the Server
 
-## 📂 Project Structure
+You can test the server in a few different ways:
 
-```
-.
-├── main.c         # Server source code
-├── README.md      # You're here!
-└── .gitignore     # Git ignore rules
+- Open your browser and go to: [http://localhost:8080](http://localhost:8080)
+- Or use command-line tools:
+  - `curl http://localhost:8080`
+  - `telnet localhost 8080`
 
-```
+### 📥 Server Behavior
+
+- Returns **file contents** when a file is requested
+- Shows an **HTML directory listing** when a folder is requested
+- Responds with **404 Not Found** for unknown or unsupported paths
 
 ---
 
@@ -54,4 +56,4 @@ gcc main.c -o server
 
 - This project is part of a public learning journey I'm sharing on Twitter — follow along and see each step as it's built and improved!
 - 📲 Twitter: @SidharRathore
-- #100DaysOfCode #CProgramming #Networking
+- #100DaysOfCode #CProgramming #Networking this was my readme duing the first commit can you revise this reame
